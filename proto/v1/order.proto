@@ -4,58 +4,87 @@ package beget.sitemap.v1.order;
 
 import "google/api/annotations.proto";
 
-
 service OrderService {
-  rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
-    option (google.api.http) = {
-      post: "/v1/sitemap/order"
-      body: "*"
-    };
-  }
-  
-  rpc getAllOrders(GetAllOrdersRequest) returns (GetAllOrdersResponse) {
-    option (google.api.http) = {
-      get: "/v1/sitemap/order/all"
-      body: "*"
-    };
-  }
+    rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
+        option (google.api.http) = {
+            post: "/v1/sitemap/order"
+            body: "*"
+        };
+    }
+
+    rpc getOrdersList(GetOrdersListRequest) returns (GetOrdersListResponse) {
+        option (google.api.http) = {
+            get: "/v1/sitemap/order/list"
+            body: "*"
+        };
+    }
 }
 
 message CreateOrderRequest {
-  string domain = 1;
-  GenerationParams params = 2;
+    string domain = 1;
+    GenerationParams params = 2;
 }
 
 message CreateOrderResponse {
+    oneof result{
+        Order order = 1;
+        Error error = 2;
+    }
 
+    enum Error {
+        _ = 0;
+        EMPTY_DOMAIN = 1;
+        ANOTHER_CUSTOMER = 2;
+        INVALID_DOMAIN = 3;
+        ALREADY_PROCESSING = 4;
+    }
 }
 
-message GetAllOrdersRequest {
-
+message GetOrdersListRequest {
 }
 
-message GetAllOrdersResponse {
-
+message GetOrdersListResponse {
+    repeated Order orders = 1;
 }
 
+message Order {
+    string domain = 1;
+    Status status = 2;
+    string completed_date = 3;
+    GenerationParams params = 4;
+
+    enum Status {
+        _ = 0;
+        COMPLETED = 1;
+        PENDING = 2;
+        PROCESSING = 3;
+        ERROR = 4;
+        CANCELED = 5;
+    }
+}
 message GenerationParams {
-  Depth depth = 1;
-  Timeout timeout = 2;
-  bool generate_url_document = 3;
-  bool send_email = 4;
+    // ?
+    Depth scan_depth = 1;
 
-  enum Depth {
-    _ = 0;
-    FIVE_PAGES = 1;
-    TEN_PAGES = 2;
-  }
+    Timeout timeout = 2;
 
-  enum Timeout {
-    _ = 0;
-    ONE_SECOND = 1;
-    THREE_SECONDS = 2;
-    FOUR_SECONDS = 3;
-  }
+    bool generate_url_document = 3;
+
+    bool send_email = 4;
+
+    enum Depth {
+        _ = 0;
+        FIVE_PAGES = 1;
+        TEN_PAGES = 2;
+    }
+
+    enum Timeout {
+        _ = 0;
+        ONE_SECOND = 1;
+        THREE_SECONDS = 2;
+    }
 }
+
+
 
 
