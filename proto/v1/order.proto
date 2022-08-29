@@ -73,15 +73,13 @@ message GenerationParams {
     bool send_email = 4;
 
     enum Depth {
-        _ = 0;
-        FIVE_PAGES = 1;
-        TEN_PAGES = 2;
+        FIVE_PAGES = 0;
+        TEN_PAGES = 1;
     }
 
     enum Timeout {
-        _ = 0;
-        ONE_SECOND = 1;
-        THREE_SECONDS = 2;
+        ONE_SECOND = 0;
+        THREE_SECONDS = 1;
     }
 }
 
