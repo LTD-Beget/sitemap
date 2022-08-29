@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package beget.sitemap.v1.order;
+
+import "google/api/annotations.proto";
+
+
+service OrderService {
+  rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/order"
+      body: "*"
+    };
+  }
+  
+  rpc getAllOrders(GetAllOrdersRequest) returns (GetAllOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/order/all"
+      body: "*"
+    };
+  }
+}
+
+message CreateOrderRequest {
+  string domain = 1;
+  GenerationParams params = 2;
+}
+
+message CreateOrderResponse {
+
+}
+
+message GetAllOrdersRequest {
+
+}
+
+message GetAllOrdersResponse {
+
+}
+
+message GenerationParams {
+  Depth depth = 1;
+  Timeout timeout = 2;
+  bool generate_url_document = 3;
+  bool send_email = 4;
+
+  enum Depth {
+    _ = 0;
+    FIVE_PAGES = 1;
+    TEN_PAGES = 2;
+  }
+
+  enum Timeout {
+    _ = 0;
+    ONE_SECOND = 1;
+    THREE_SECONDS = 2;
+    FOUR_SECONDS = 3;
+  }
+}
+
+
