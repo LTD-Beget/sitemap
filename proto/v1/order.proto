@@ -12,16 +12,33 @@ service OrderService {
         };
     }
 
-    rpc getOrdersList(GetOrdersListRequest) returns (GetOrdersListResponse) {
+    rpc getOrder(GetOrderRequest) returns (GetOrderResponse) {
+        option (google.api.http) = {
+            get: "/v1/sitemap/order/{id}"
+        };
+    }
+
+    rpc cancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {
+        option (google.api.http) = {
+            post: "/v1/sitemap/order/{id}/cancel"
+        };
+    }
+
+    rpc getOrderList(GetOrderListRequest) returns (GetOrderListResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/order/list"
-            body: "*"
+        };
+    }
+
+    rpc getValidFqdnList(GetValidFqdnListRequest) returns (GetValidFqdnListResponse) {
+        option (google.api.http) = {
+            get: "/v1/sitemap/valid-fqdn/list"
         };
     }
 }
 
 message CreateOrderRequest {
-    string domain = 1;
+    string fqdn = 1;
     GenerationParams params = 2;
 }
 
@@ -40,17 +57,42 @@ message CreateOrderResponse {
     }
 }
 
-message GetOrdersListRequest {
+message GetOrderRequest {
+    // Идентификатор Заявки
+    uint64 id = 1;
 }
 
-message GetOrdersListResponse {
-    repeated Order orders = 1;
+message GetOrderResponse {
+    Order order = 1;
+}
+
+
+message CancelOrderRequest {
+    // Идентификатор Заявки
+    uint64 id = 1;
+}
+
+message CancelOrderResponse {
+}
+
+message GetOrderListRequest {
+}
+
+message GetOrderListResponse {
+    repeated Order order = 1;
+}
+
+message GetValidFqdnListRequest {
+}
+
+message GetValidFqdnListResponse {
+    repeated string fqdn = 1;
 }
 
 message Order {
-    string domain = 1;
+    string fqdn = 1;
     Status status = 2;
-    string completed_date = 3;
+    string completion_date = 3;
     GenerationParams params = 4;
 
     enum Status {
@@ -64,23 +106,13 @@ message Order {
 }
 message GenerationParams {
     // ?
-    Depth scan_depth = 1;
+    uint32 scan_depth = 1;
 
-    Timeout timeout = 2;
+    uint32 timeout = 2;
 
     bool generate_url_document = 3;
 
     bool send_email = 4;
-
-    enum Depth {
-        FIVE_PAGES = 0;
-        TEN_PAGES = 1;
-    }
-
-    enum Timeout {
-        ONE_SECOND = 0;
-        THREE_SECONDS = 1;
-    }
 }
 
 
