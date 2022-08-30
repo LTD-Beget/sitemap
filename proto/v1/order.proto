@@ -97,12 +97,11 @@ message Order {
 
     enum Status {
         _ = 0;
-        NOT_CREATED = 1;
-        COMPLETED = 2;
-        PENDING = 3;
-        PROCESSING = 4;
-        ERROR = 5;
-        CANCELED = 6;
+        COMPLETED = 1;
+        PENDING = 2;
+        PROCESSING = 3;
+        ERROR = 4;
+        CANCELED = 5;
     }
 }
 message GenerationParams {
