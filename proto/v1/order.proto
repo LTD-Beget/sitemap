@@ -4,32 +4,35 @@ package beget.sitemap.v1.order;
 
 import "google/api/annotations.proto";
 
+
+// Сервис для работы с Sitemap
 service OrderService {
+    // Создание заявки на генерацию новой Sitemap
     rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
         option (google.api.http) = {
             post: "/v1/sitemap/order"
             body: "*"
         };
     }
-
+    // Получение последней заявки на генерацию Sitemap для домена
     rpc getOrder(GetOrderRequest) returns (GetOrderResponse) {
         option (google.api.http) = {
-            get: "/v1/sitemap/order/{id}"
+            get: "/v1/sitemap/order/{fqdn}"
         };
     }
-
+    // Отмена последней заявки на генерацию Sitemap для домена
     rpc cancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {
         option (google.api.http) = {
-            post: "/v1/sitemap/order/{id}/cancel"
+            post: "/v1/sitemap/order/{fqdn}/cancel"
         };
     }
-
+    // Получение всех заявок пользователя на генерацию Sitemap
     rpc getOrderList(GetOrderListRequest) returns (GetOrderListResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/order/list"
         };
     }
-
+    // Получение списка доменов, для которых может быть сгенерирован Sitemap
     rpc getValidFqdnList(GetValidFqdnListRequest) returns (GetValidFqdnListResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/valid-fqdn/list"
@@ -38,37 +41,81 @@ service OrderService {
 }
 
 message CreateOrderRequest {
+    // Домен
     string fqdn = 1;
+
+    // Параметры генерации Sitemap
     GenerationParams params = 2;
 }
 
 message CreateOrderResponse {
+    // Результат запроса
     oneof result{
+        // Информация о заявке
         Order order = 1;
+
+        // Ошибка создания заявки
         Error error = 2;
     }
 
-    enum Error {
-        _ = 0;
-        EMPTY_DOMAIN = 1;
-        ANOTHER_CUSTOMER = 2;
-        INVALID_DOMAIN = 3;
-        ALREADY_PROCESSING = 4;
+    message Error {
+        // Код ошибки
+        Code code = 1;
+
+        // Расширенное описание ошибки
+        oneof extra {
+            //Расширенное описание ошибки: некорректное значение переменной
+            GenerationParamsError params_error = 2;
+        }
+
+        message GenerationParamsError {
+            // Список ошибок
+            repeated ValueError error = 2;
+
+            enum ValueError {
+                _ = 0;
+
+                // Некорректная глубина обхода ссылок на сайте
+                INVALID_SCAN_DEPTH = 1;
+
+                // Некорректная задержка между запросами при обходе ссылок на сайте
+                INVALID_REQUEST_DELAY = 2;
+            }
+        }
+
+        enum Code {
+            _ = 0;
+
+            // Поле домена не заполнено
+            EMPTY_FQDN = 1;
+
+            // Домен принадлежит другому пользователю
+            ANOTHER_CUSTOMER = 2;
+
+            // Некорректный домен
+            INVALID_FQDN = 3;
+
+            // Уже существует заявка на генерацию в работе
+            ALREADY_PROCESSING = 4;
+
+            // Некорректные параметры генерации
+            INVALID_PARAMS = 5;
+        }
     }
 }
 
 message GetOrderRequest {
-    // Домен, для которого нужно получить ордер
+    // Домен, для которого нужно получить заявку
     string fqdn = 1;
 }
 
 message GetOrderResponse {
+    // Информация о заявке
     Order order = 1;
 }
 
-
 message CancelOrderRequest {
-    // Домен, для которого нужно отменить ордер
+    // Домен, для которого нужно отменить заявку
     string fqdn = 1;
 }
 
@@ -79,6 +126,7 @@ message GetOrderListRequest {
 }
 
 message GetOrderListResponse {
+    // Список заявок
     repeated Order order = 1;
 }
 
@@ -86,32 +134,57 @@ message GetValidFqdnListRequest {
 }
 
 message GetValidFqdnListResponse {
+    // Список доступных доменов
     repeated string fqdn = 1;
 }
 
+// Информация о заявке
 message Order {
+    // Домен
     string fqdn = 1;
+
+    // Статус заявки
     Status status = 2;
+
+    // Дата и время завершения генерации Sitemap (RFC3339)
     string completion_date = 3;
+
+    // Параметры генерации Sitemap
     GenerationParams params = 4;
 
+    // Статус заявки
     enum Status {
         _ = 0;
+
+        // Генерация завершена
         COMPLETED = 1;
+
+        // Заявка создана, но ещё не обработана
         PENDING = 2;
+
+        // Происходит обход ссылок на сайте
         PROCESSING = 3;
+
+        // В процессе генерации произошла ошибка
         ERROR = 4;
+
+        // Заявка отменена
         CANCELED = 5;
     }
 }
+
+// Параметры генерации Sitemap
 message GenerationParams {
-    // ?
+    // Глубина обхода ссылок на сайте
     uint32 scan_depth = 1;
 
-    uint32 timeout = 2;
+    // Задержка между запросами при обходе ссылок на сайте
+    uint32 request_delay = 2;
 
+    // Нужно ли сгенерировать дополнительный файл со списком ссылок
     bool generate_url_document = 3;
 
+    // Нужно ли отправить результат генерации на почту
     bool send_email = 4;
 }
 
