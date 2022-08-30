@@ -58,8 +58,8 @@ message CreateOrderResponse {
 }
 
 message GetOrderRequest {
-    // Идентификатор Заявки
-    uint64 id = 1;
+    // Домен, для которого нужно получить ордер
+    string fqdn = 1;
 }
 
 message GetOrderResponse {
@@ -68,8 +68,8 @@ message GetOrderResponse {
 
 
 message CancelOrderRequest {
-    // Идентификатор Заявки
-    uint64 id = 1;
+    // Домен, для которого нужно отменить ордер
+    string fqdn = 1;
 }
 
 message CancelOrderResponse {
@@ -97,11 +97,12 @@ message Order {
 
     enum Status {
         _ = 0;
-        COMPLETED = 1;
-        PENDING = 2;
-        PROCESSING = 3;
-        ERROR = 4;
-        CANCELED = 5;
+        NOT_CREATED = 1;
+        COMPLETED = 2;
+        PENDING = 3;
+        PROCESSING = 4;
+        ERROR = 5;
+        CANCELED = 6;
     }
 }
 message GenerationParams {
