@@ -29,13 +29,13 @@ service OrderService {
     // Получение всех заявок пользователя на генерацию Sitemap
     rpc getOrderList(GetOrderListRequest) returns (GetOrderListResponse) {
         option (google.api.http) = {
-            get: "/v1/sitemap/order/list"
+            get: "/v1/sitemap/order-list"
         };
     }
     // Получение списка доменов, для которых может быть сгенерирован Sitemap
     rpc getValidFqdnList(GetValidFqdnListRequest) returns (GetValidFqdnListResponse) {
         option (google.api.http) = {
-            get: "/v1/sitemap/valid-fqdn/list"
+            get: "/v1/sitemap/valid-fqdn-list"
         };
     }
 }
