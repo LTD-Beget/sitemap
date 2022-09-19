@@ -98,8 +98,14 @@ message CreateOrderResponse {
             // Уже существует заявка на генерацию в работе
             ALREADY_PROCESSING = 4;
 
+            // У домена установлены не BEGET NS записи
+            NOT_OUR_NS_RECORDS = 5;
+
+            // A записи домена ведут не на сервера BEGET
+            NOT_OUR_A_RECORDS = 6;
+
             // Некорректные параметры генерации
-            INVALID_PARAMS = 5;
+            INVALID_PARAMS = 7;
         }
     }
 }
