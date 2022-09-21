@@ -15,7 +15,7 @@ service OrderService {
         };
     }
     // Получение последней заявки на генерацию Sitemap для домена
-    rpc getOrder(GetOrderRequest) returns (GetOrderResponse) {
+    rpc getOrderByFqdn(GetOrderByFqdnRequest) returns (GetOrderByFqdnResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/order/{fqdn}"
         };
@@ -110,12 +110,12 @@ message CreateOrderResponse {
     }
 }
 
-message GetOrderRequest {
+message GetOrderByFqdnRequest {
     // Домен, для которого нужно получить заявку
     string fqdn = 1;
 }
 
-message GetOrderResponse {
+message GetOrderByFqdnResponse {
     // Информация о заявке
     Order order = 1;
 }
