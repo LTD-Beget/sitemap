@@ -158,6 +158,10 @@ message Order {
     // Параметры генерации Sitemap
     GenerationParams params = 4;
 
+
+    // Path для загрузки архива с xml
+    string archive_path = 5;
+
     // Статус заявки
     enum Status {
         _ = 0;
