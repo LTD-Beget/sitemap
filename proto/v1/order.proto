@@ -106,6 +106,9 @@ message CreateOrderResponse {
 
             // Некорректные параметры генерации
             INVALID_PARAMS = 7;
+
+            // К сайту прилинковано более одного домена
+            TO_MANY_LINKED_DOMAINS = 8;
         }
     }
 }
