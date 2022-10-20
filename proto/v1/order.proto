@@ -4,35 +4,57 @@ package beget.sitemap.v1.order;
 
 import "google/api/annotations.proto";
 
-
-// Сервис для работы с Sitemap
+// Генерация sitemap.xml
+//
+// Предоставляет методы для работы с заявками на генерацию sitemap.xml
 service OrderService {
-    // Создание заявки на генерацию новой Sitemap
+    // Создать заявку
+    //
+    // Создаёт заявку на генерацию sitemap.xml. Если завяка уже есть, то обновляет существующую.
+    //
+    // Для получения доступных доменов `fqdn` необходимо использовать метод
+    // "Получить список доступных доменов" из API "Генерация sitemap.xml".
     rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
         option (google.api.http) = {
             post: "/v1/sitemap/order"
             body: "*"
         };
     }
-    // Получение последней заявки на генерацию Sitemap для домена
+
+    // Получить заявку
+    //
+    // Возвращает информацию о заявке на генерацию sitemap.xml.
+    // В случае отсутствия заявки вернёт 404.
     rpc getOrderByFqdn(GetOrderByFqdnRequest) returns (GetOrderByFqdnResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/order/{fqdn}"
         };
     }
-    // Отмена последней заявки на генерацию Sitemap для домена
+
+    // Отменить заявку
+    //
+    // Отменяет существующую заявку на генерацию sitemap.xml.
+    //
+    // Для получения существующих заявок необходимо использовать метод
+    // "Получить список заявок" из API "Генерация sitemap.xml".
     rpc cancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {
         option (google.api.http) = {
             post: "/v1/sitemap/order/{fqdn}/cancel"
         };
     }
-    // Получение всех заявок пользователя на генерацию Sitemap
+
+    // Получить список заявок
+    //
+    // Возвращает список всех заявок на генерацию sitemap.xml, которые были созданы пользователем.
     rpc getOrderList(GetOrderListRequest) returns (GetOrderListResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/order-list"
         };
     }
-    // Получение списка доменов, для которых может быть сгенерирован Sitemap
+
+    // Получить список доступных доменов
+    //
+    // Возвращает список доменов, для которых можно сгенерировать sitemap.xml
     rpc getValidFqdnList(GetValidFqdnListRequest) returns (GetValidFqdnListResponse) {
         option (google.api.http) = {
             get: "/v1/sitemap/valid-fqdn-list"
@@ -41,7 +63,7 @@ service OrderService {
 }
 
 message CreateOrderRequest {
-    // Домен
+    // Домен, для которого нужно создать заявку
     string fqdn = 1;
 
     // Параметры генерации Sitemap
@@ -49,7 +71,6 @@ message CreateOrderRequest {
 }
 
 message CreateOrderResponse {
-    // Результат запроса
     oneof result{
         // Информация о заявке
         Order order = 1;
@@ -155,38 +176,38 @@ message Order {
     // Статус заявки
     Status status = 2;
 
-    // Дата и время завершения генерации Sitemap (RFC3339)
+    // Дата и время завершения генерации ышеуьфзючьд (RFC3339)
     string completion_date = 3;
 
-    // Параметры генерации Sitemap
+    // Параметры генерации sitemap.xml
     GenerationParams params = 4;
 
 
-    // Path для загрузки архива с xml
+    // Path для загрузки архива с sitemap.xml
     string archive_path = 5;
 
     // Статус заявки
     enum Status {
         _ = 0;
 
-        // Генерация завершена
+        // Статус заявки: Генерация завершена
         COMPLETED = 1;
 
-        // Заявка создана, но ещё не обработана
+        // Статус заявки: Заявка создана, но ещё не обработана
         PENDING = 2;
 
-        // Происходит обход ссылок на сайте
+        // Статус заявки: Происходит обход ссылок на сайте
         PROCESSING = 3;
 
-        // В процессе генерации произошла ошибка
+        // Статус заявки: В процессе генерации произошла ошибка
         ERROR = 4;
 
-        // Заявка отменена
+        // Статус заявки: Заявка отменена
         CANCELED = 5;
     }
 }
 
-// Параметры генерации Sitemap
+// Параметры генерации sitemap.xml
 message GenerationParams {
     // Глубина обхода ссылок на сайте
     uint32 scan_depth = 1;
