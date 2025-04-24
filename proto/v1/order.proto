@@ -60,6 +60,27 @@ service OrderService {
             get: "/v1/sitemap/valid-fqdn-list"
         };
     }
+
+  // Получить информацию о процессе создания sitemap.xml
+  rpc getProgressInfo(GetProgressInfoRequest) returns (ProgressInfo) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/progress-info/{order_id}"
+    };
+  }
+
+  // Приостановить или продолжить создание sitemap.xml
+  rpc pauseOrder(PauseRequest) returns (ProgressInfo) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/order/{order_id}/pause"
+      body: "*"
+    };
+  }
+
+  rpc getLimit(GetLimitRequest) returns (Limit) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/limit/{customer_id}"
+    };
+  }
 }
 
 message CreateOrderRequest {
@@ -176,15 +197,19 @@ message Order {
     // Статус заявки
     Status status = 2;
 
-    // Дата и время завершения генерации ышеуьфзючьд (RFC3339)
+    // Дата и время завершения генерации sitemap.xml (RFC3339)
     string completion_date = 3;
 
     // Параметры генерации sitemap.xml
     GenerationParams params = 4;
 
-
     // Path для загрузки архива с sitemap.xml
     string archive_path = 5;
+
+    uint64 order_id = 6;
+
+    // Обработка заявки приостановлена
+    bool paused = 7;
 
     // Статус заявки
     enum Status {
@@ -222,6 +247,42 @@ message GenerationParams {
     bool send_email = 4;
 }
 
+message GetProgressInfoRequest {
+  uint64 order_id = 1;
+}
 
+message ProgressInfo {
+  Order order = 1;
 
+  uint64 pages_found = 2;
+  uint64 pages_crawled = 3;
 
+  // Дата-время начала генерации Sitemap (RFC3339)
+  string started_at = 4;
+}
+
+message PauseRequest {
+  uint64 order_id = 1;
+
+  // Состояние паузы: true - поставить на паузу, false - продолжить
+  bool pause = 2;
+}
+
+message GetLimitRequest {
+  uint64 customer_id = 1;
+}
+
+message Limit {
+  uint32 pages_per_second = 1;
+  uint32 pages_total = 2;
+  Amount amount = 3;
+
+  uint32 depth = 4;
+  bool background_generation = 5;
+  bool history = 6;
+
+  message Amount {
+    uint32 generations_per_period = 1;
+    uint32 days_in_period = 2;
+  }
+}
