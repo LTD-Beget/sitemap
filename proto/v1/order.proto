@@ -209,11 +209,11 @@ message Order {
 
 // Параметры генерации sitemap.xml
 message GenerationParams {
-    reserved 2;
-    reserved "request_delay";
-
     // Глубина обхода ссылок на сайте
     uint32 scan_depth = 1;
+
+    // Задержка между запросами при обходе ссылок на сайте в миллисекундах
+    uint32 request_delay = 2;
 
     // Нужно ли сгенерировать дополнительный файл со списком ссылок
     bool generate_url_document = 3;
