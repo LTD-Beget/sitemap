@@ -1,0 +1,274 @@
+syntax = "proto3";
+
+package beget.sitemap.v1.task;
+
+import "google/api/annotations.proto";
+
+// TaskService - сервис для управления задачми на генерацию карты сайта.
+//
+// gRPC / HTTP-gateway сервис для управления задачами
+// генерации sitemap.xml. Все даты передаются в формате RFC-3339.
+service TaskService {
+  // Создаёт новую задачу генерации sitemap.xml.
+  //
+  // Возвращает либо созданную задачу в статусе NEW, либо ошибку —
+  // например, если для того же base_url уже существует активная задача.
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/task"
+      body: "*"
+    };
+  }
+
+  // Получает информацию о задаче по её идентификатору.
+  //
+  // Если задача не найдена, возвращает ошибку NOT_FOUND.
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/task/{task_id}"
+    };
+  }
+
+  // Получает историю задач пользователя.
+  //
+  // Поддерживает пагинацию через `page_size` / `page_token`.
+  // Токен — непрозрачная строка, которую клиент должен передавать «как есть».
+  rpc HistoryTasks(HistoryTasksRequest) returns (HistoryTasksResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/task/history"
+    };
+  }
+
+  // Отменяет выполняющуюся или ожидающую задачу.
+  //
+  // Возможные ошибки:
+  // * NOT_FOUND     — задача не существует;
+  // * NOT_CANCELABLE — задачу нельзя отменить (уже COMPLETED / CANCELED / FAILED).
+  rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/task/{task_id}/cancel"
+    };
+  }
+
+  // Приостанавливает выполняющуюся задачу.
+  //
+  // Возможные ошибки:
+  // * NOT_FOUND     — задача не существует;
+  // * NOT_PAUSABLE  — задачу нельзя приостановить (не RUNNING);
+  // * CONFLICT      — превышено количество одновременных приостановленных задач.
+  rpc PauseTask(PauseTaskRequest) returns (PauseTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/task/{task_id}/pause"
+    };
+  }
+
+  // Возобновляет ранее приостановленную задачу.
+  //
+  // Возможные ошибки:
+  // * NOT_FOUND     — задача не существует;
+  // * NOT_RESUMABLE — задачу нельзя возобновить (не SUSPENDED).
+  rpc ResumeTask(ResumeTaskRequest) returns (ResumeTaskResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/task/{task_id}/resume"
+    };
+  }
+}
+
+// ------------------------  Запросы  ------------------------
+
+message CreateTaskRequest {
+  // Базовый URL сайта, например "https://example.com".
+  string base_url = 1;
+
+  // Параметры генерации.
+  GenerationParams params = 2;
+
+  message GenerationParams {
+    // Глубина обхода; 0 — без ограничений.
+    uint32 scan_depth = 1;
+    // Задержка между запросами в мс; 0 - без ограничений.
+    uint32 request_delay_ms = 2;
+  }
+}
+
+message GetTaskRequest {
+  // Идентификатор задачи.
+  uint64 task_id = 1;
+}
+
+message HistoryTasksRequest {
+  // Количество элементов на страницу. По умолчанию 20, максимум 100.
+  uint32 page_size = 1;
+
+  // Токен следующей страницы, полученный из предыдущего ответа.
+  // Пустая строка — запрашивается первая страница.
+  string page_token = 2;
+}
+
+message CancelTaskRequest  {uint64 task_id = 1;}
+message PauseTaskRequest   {uint64 task_id = 1;}
+message ResumeTaskRequest  {uint64 task_id = 1;}
+
+// ------------------------  Ответы  ------------------------
+
+message CreateTaskResponse {
+  oneof result {
+    // Созданная задача.
+    Task task = 1;
+    // Ошибка создания задачи.
+    Error error = 2;
+  }
+}
+
+message GetTaskResponse {
+  oneof result {
+    // Созданная задача.
+    Task task = 1;
+    // Ошибка получения задачи.
+    Error error = 2;
+  }
+}
+
+message HistoryTasksResponse {
+  oneof result {
+    History history = 1;
+    // Ошибка получения истории
+    Error error = 2;
+  }
+
+  message History {
+    // Список задач.
+    repeated Task tasks = 1;
+    // Токен следующей страницы; пустая строка, если страниц больше нет.
+    string next_page_token = 2;
+  }
+}
+
+message CancelTaskResponse {
+  oneof result {
+    // Обновлённая задача.
+    Task task = 1;
+    // Ошибка отмены.
+    Error error = 2;
+  }
+}
+
+message PauseTaskResponse {
+  oneof result {
+    Task task = 1;
+    Error error = 2;
+  }
+}
+
+message ResumeTaskResponse {
+  oneof result {
+    Task task = 1;
+    Error error = 2;
+  }
+}
+
+// ------------------------  Сущности  ------------------------
+
+message Task {
+  // Уникальный идентификатор.
+  uint64 id = 1;
+
+  // URL сайта.
+  string base_url = 2;
+
+  // Текущий статус.
+  Status status = 3;
+
+  // Текущий прогресс.
+  Progress progress = 4;
+
+  // Дата создания задачи. Формат RFC-3339
+  string created_at = 5;
+
+  // Дата последнего обновления задачи. Формат RFC-3339
+  string updated_at = 6;
+
+  oneof generation_result {
+    // Результат генерации карты
+    GenerationResult success_result = 7;
+    // Ошибка, возникшая при генерации
+    //
+    // Возможные ошибки:
+    // * TOO_MANY_TIMEOUTS         — сайт слишком долго отвечал;
+    // * TOO_MANY_INTERNAL_ERRORS  — сайт отдаёт ошибки сервера;
+    Error error = 8;
+  }
+
+  message GenerationResult {
+    // Ссылка на txt файл
+    string txt_link = 1;
+    // Ссылка на xml файл
+    string xml_link = 2;
+  }
+
+  message Progress {
+    // Обработанных страниц.
+    uint64 pages_done = 1;
+    // Количество страниц, необходимых обработать за всё время. 0 — неизвестно.
+    uint64 pages_total = 2;
+    // Оставшееся время (ETA) в мс. 0 — не рассчитано.
+    uint64 eta_ms = 3;
+    // Скорость обработки, страниц/сек.
+    double speed_pps = 4;
+  }
+}
+
+// ------------------------  Перечисления  ------------------------
+
+enum Status {
+  // Неопределённый статус (не должен использоваться).
+  STATUS_UNSPECIFIED = 0;
+  // Задача создана, но ещё не поставлена в очередь.
+  NEW = 1;
+  // Задача стоит в очереди на выполнение.
+  QUEUED = 2;
+  // Задача выполняется.
+  RUNNING = 3;
+  // Выполнение приостановлено пользователем.
+  SUSPENDED = 4;
+  // Задача успешно завершена.
+  COMPLETED = 5;
+  // При выполнении произошла ошибка.
+  FAILED = 6;
+  // Задача отменена пользователем.
+  CANCELED = 7;
+}
+
+message Error {
+  // Код ошибки.
+  Code code = 1;
+  // Читаемое описание.
+  string message = 2;
+
+  enum Code {
+    // Неопределённая ошибка.
+    CODE_UNSPECIFIED = 0;
+    // Внутренняя ошибка сервера.
+    INTERNAL_ERROR = 1;
+    // base_url не заполнен.
+    EMPTY_BASE_URL = 2;
+    // base_url некорректен.
+    INVALID_BASE_URL = 3;
+    // Для указанного base_url уже есть активная задача.
+    ALREADY_ACTIVE = 4;
+    // Ошибка в параметрах генерации.
+    INVALID_PARAMS = 5;
+    // Задача не найдена.
+    NOT_FOUND = 6;
+    // Задачу нельзя отменить.
+    NOT_CANCELABLE = 7;
+    // Задачу нельзя приостановить.
+    NOT_PAUSABLE = 8;
+    // Задачу нельзя возобновить.
+    NOT_RESUMABLE = 9;
+    // Невозможно сгенерировать корректную карту, т.к. сайт слишком долго отвечает.
+    TOO_MANY_TIMEOUTS = 10;
+    // Невозможно сгенерировать корректную карту, т.к. сайт отдаёт слишком много 500х ошибок.
+    TOO_MANY_INTERNAL_ERRORS = 11;
+  }
+}
