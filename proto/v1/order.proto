@@ -119,6 +119,8 @@ message GetDomainHistoryResponse {
         string domain = 2;
         // Последние 3 заявки для домена.
         repeated Order last_orders = 3;
+        // Указывает, присутствуют ли ещё заявки помимо тех, что есть в last_orders
+        bool has_more = 4;
     }
 
     message Error {
