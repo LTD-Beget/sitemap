@@ -6,242 +6,293 @@ import "google/api/annotations.proto";
 
 // Сервис для управления заявками на генерацию карты сайта.
 service OrderService {
-    // Создаёт новую заявку генерации карты сайта.
-    rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
-        option (google.api.http) = {
-            post: "/v1/sitemap/order"
-            body: "*"
-        };
-    }
+  // Создаёт новую заявку генерации карты сайта.
+  rpc createOrder(CreateOrderRequest) returns (CreateOrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/order"
+      body: "*"
+    };
+  }
 
-    // Получает информацию о заявке по её идентификатору.
-    rpc getOrder(GetOrderRequest) returns (GetOrderResponse) {
-        option (google.api.http) = {
-            get: "/v1/sitemap/order/{order_id}"
-        };
-    }
+  // Отменяет переданную заявку.
+  //
+  // Отменяет переданную заявку. Отмененная заявка не учитывается в ограничениях тарифа пользователя.
+  rpc cancelOrder(CancelOrderRequest) returns (CancelOrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/sitemap/order/cancel"
+      body: "*"
+    };
+  }
 
-    // Получает историю заявок пользователя по конкретному домену.
-    rpc getOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse) {
-        option (google.api.http) = {
-            get: "/v1/sitemap/order/history/{domain_id}"
-        };
-    }
+  // Получает информацию о заявке по её идентификатору.
+  rpc getOrder(GetOrderRequest) returns (GetOrderResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/order/{order_id}"
+    };
+  }
 
-    // Получает список доменов и последние заявки по каждому из них.
-    rpc getDomainHistory(GetDomainHistoryRequest) returns (GetDomainHistoryResponse) {
-        option (google.api.http) = {
-            get: "/v1/sitemap/domain/history"
-        };
-    }
+  // Получает историю заявок пользователя по конкретному домену.
+  rpc getOrderHistory(GetOrderHistoryRequest) returns (GetOrderHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/order/history/{domain_id}"
+    };
+  }
+
+  // Получает список доменов и последние заявки по каждому из них.
+  rpc getDomainHistory(GetDomainHistoryRequest) returns (GetDomainHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/domain/history"
+    };
+  }
 }
 
-
 message CreateOrderRequest {
-    // Домен, например "example.com".
-    string domain = 1;
+  // Домен, например "example.com".
+  string domain = 1;
+  // Указывает, добавлять ли ссылки с query параметрами в карту сайта заявки.
+  bool with_query_params = 2;
 }
 
 message CreateOrderResponse {
-    oneof result {
-        // Созданная заявка.
-        Order order = 1;
-        // Ошибка создания заявки.
-        Error error = 2;
+  oneof result {
+    // Созданная заявка.
+    Order order = 1;
+    // Ошибка создания заявки.
+    Error error = 2;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
+
+      // Поле домена не заполнено
+      EMPTY_DOMAIN = 1;
+
+      // Некорректный домен
+      INVALID_DOMAIN = 2;
+
+      // Заявка для переданного домена уже находится в работе
+      ALREADY_PROCESSING = 3;
+
+      // Исчерпаны лимиты по тарифу пользователя.
+      LIMITS_DONE = 4;
+
     }
-
-    message Error {
-        // Код ошибки.
-        Code code = 1;
-
-        enum Code {
-            _ = 0;
-
-            // Поле домена не заполнено
-            EMPTY_DOMAIN = 1;
-
-            // Некорректный домен
-            INVALID_DOMAIN = 2;
-
-            // Уже существует заявка на генерацию в работе
-            ALREADY_PROCESSING = 3;
-        }
-    }
+  }
 }
 
+message CancelOrderRequest {
+  // Идентификатор заявки.
+  uint64 order_id = 1;
+}
+
+message CancelOrderResponse {
+  oneof result {
+    // Текущее состояние заявки.
+    Order order = 1;
+    // Ошибка отмены заявки.
+    Error error = 2;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
+
+      // Заявка не найдена
+      ORDER_NOT_FOUND = 1;
+
+      // Некорректный статус для отмены заявки.
+      INVALID_STATUS = 2;
+    }
+  }
+}
 
 message GetOrderRequest {
-    // Идентификатор заявки.
-    uint64 order_id = 1;
+  // Идентификатор заявки.
+  uint64 order_id = 1;
 }
 
 message GetOrderResponse {
-    oneof result {
-        // Заявка.
-        Order order = 1;
-        // Ошибка получения заявки.
-        Error error = 2;
+  oneof result {
+    // Заявка.
+    Order order = 1;
+    // Ошибка получения заявки.
+    Error error = 2;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
+
+      // Переданная заявка не найдена
+      NOT_FOUND = 1;
     }
+  }
+}
 
-    message Error {
-        // Код ошибки.
-        Code code = 1;
+message GetOrderHistoryRequest {
+  // Идентификатор домена, по которому необходимо получить историю генераций.
+  // Можно получить из запроса /v1/sitemap/domain/history
+  uint64 domain_id = 1;
+}
 
-        enum Code {
-            _ = 0;
+message GetOrderHistoryResponse {
+  oneof result {
+    OrderHistory history = 1;
+    // Ошибка получения истории.
+    Error error = 2;
+  }
 
-            // Переданная заявка не найдена
-            NOT_FOUND = 1;
-        }
+  message OrderHistory {
+    // Список заявок.
+    repeated Order orders = 1;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
+
+      // Передан некорректный идентификатор домена.
+      INVALID_DOMAIN = 1;
+
+      // Отсутствует история запросов.
+      NOT_FOUND = 2;
     }
+  }
 }
 
 message GetDomainHistoryRequest {
 }
 
 message GetDomainHistoryResponse {
-    oneof result {
-        // История по конкретному домену.
-        DomainHistory history = 1;
-        // Ошибка получения доменов.
-        Error error = 2;
-    }
+  oneof result {
+    // История по конкретному домену.
+    DomainHistory history = 1;
+    // Ошибка получения доменов.
+    Error error = 2;
+  }
 
-    message DomainHistory {
-        // Информация о доменах.
-        repeated Domain domains = 1;
-    }
+  message DomainHistory {
+    // Информация о доменах.
+    repeated Domain domains = 1;
+  }
 
-    message Domain {
-        // Идентификатор домена.
-        uint64 domain_id = 1;
-        // Домен.
-        string domain = 2;
-        // Последние 3 заявки для домена.
-        repeated Order last_orders = 3;
-        // Указывает, присутствуют ли ещё заявки помимо тех, что есть в last_orders
-        bool has_more = 4;
-    }
-
-    message Error {
-        // Код ошибки.
-        Code code = 1;
-
-        enum Code {
-            _ = 0;
-
-            // Отсутствует история запросов.
-            NOT_FOUND = 1;
-        }
-    }
-}
-
-message GetOrderHistoryRequest {
-    // Идентификатор домена, по которому необходимо получить историю генераций.
-    // Можно получить из запроса /v1/sitemap/domain/history
+  message Domain {
+    // Идентификатор домена.
     uint64 domain_id = 1;
+    // Домен.
+    string domain = 2;
+    // Последние 3 заявки для домена.
+    repeated Order last_orders = 3;
+    // Указывает, присутствуют ли ещё заявки помимо тех, что есть в last_orders
+    bool has_more = 4;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
+
+      // Отсутствует история запросов.
+      NOT_FOUND = 1;
+    }
+  }
 }
-
-
-message GetOrderHistoryResponse {
-    oneof result {
-        OrderHistory history = 1;
-        // Ошибка получения истории.
-        Error error = 2;
-    }
-
-    message OrderHistory {
-        // Список заявок.
-        repeated Order orders = 1;
-    }
-
-    message Error {
-        // Код ошибки.
-        Code code = 1;
-
-        enum Code {
-            _ = 0;
-
-            // Передан некорректный идентификатор домена.
-            INVALID_DOMAIN = 1;
-
-            // Отсутствует история запросов.
-            NOT_FOUND = 2;
-        }
-    }
-}
-
 
 message Order {
-    // Уникальный идентификатор.
-    uint64 id = 1;
+  // Уникальный идентификатор.
+  uint64 id = 1;
 
-    // Идентификатор домена, привязанного к заказу.
-    uint64 domain_id = 2;
+  // Идентификатор домена, привязанного к заказу.
+  uint64 domain_id = 2;
 
-    // FQDN (домен).
-    string domain = 3;
+  // FQDN (домен).
+  string domain = 3;
 
-    // Текущий статус.
-    Status status = 4;
+  // Текущий статус.
+  Status status = 4;
 
-    // Текущий прогресс.
-    Progress progress = 5;
+  // Текущий прогресс.
+  Progress progress = 5;
 
-    // Дата создания заявки (RFC-3339).
-    string created_at = 6;
+  // Дата создания заявки (RFC-3339).
+  string created_at = 6;
 
-    // Дата последнего обновления заявки (RFC-3339).
-    string updated_at = 7;
+  // Дата последнего обновления заявки (RFC-3339).
+  string updated_at = 7;
 
-    oneof generation_result {
-        // Результат генерации карты.
-        GenerationResult success_result = 8;
-        // Ошибка, возникшая при генерации.
-        Error error = 9;
+  oneof generation_result {
+    // Результат генерации карты.
+    GenerationResult success_result = 8;
+    // Ошибка, возникшая при генерации.
+    Error error = 9;
+  }
+
+  // Указывает, добавлять ли ссылки с query параметрами в карту сайта заявки.
+  bool with_query_params = 10;
+
+  // Возвращает количество секунд, которые заявка фактически не выполнялась.
+  uint64 seconds_in_pause = 11;
+
+  message GenerationResult {
+    // Ссылка на txt-файл.
+    string txt_link = 1;
+    // Ссылка на xml-файл.
+    string xml_link = 2;
+  }
+
+  message Progress {
+    // Обработанных страниц.
+    uint64 pages_done = 1;
+    // Количество страниц, необходимых обработать за всё время. 0 — неизвестно.
+    uint64 pages_total = 2;
+  }
+
+  enum Status {
+    // Неопределённый статус (не должен использоваться).
+    _ = 0;
+    // Заявка успешно завершена.
+    COMPLETED = 1;
+    // Заявка создана, но ещё не поставлена в очередь.
+    PENDING = 2;
+    // Происходит обход ссылок на сайте.
+    PROCESSING = 3;
+    // Обход завершён, происходит сохранение карты сайта.
+    GENERATING = 4;
+    // В процессе генерации произошла ошибка
+    ERROR = 5;
+    // Достигнуты лимиты по пройденным страницам сайта: необходимо обновить тариф
+    LIMITS_DONE = 6;
+    // Генерация карты сайта отменена (либо по истечению времени, либо самим пользователем).
+    CANCELED = 7;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
+
+      // Невозможно сгенерировать корректную карту, т.к. сайт слишком долго отвечает.
+      TOO_MANY_TIMEOUTS = 1;
+
+      // Невозможно сгенерировать корректную карту, т.к. сайт отдаёт слишком много 500х ошибок.
+      TOO_MANY_INTERNAL_ERRORS = 2;
     }
-
-    message GenerationResult {
-        // Ссылка на txt-файл.
-        string txt_link = 1;
-        // Ссылка на xml-файл.
-        string xml_link = 2;
-    }
-
-    message Progress {
-        // Обработанных страниц.
-        uint64 pages_done = 1;
-        // Количество страниц, необходимых обработать за всё время. 0 — неизвестно.
-        uint64 pages_total = 2;
-    }
-
-    enum Status {
-        // Неопределённый статус (не должен использоваться).
-        _ = 0;
-        // Заявка успешно завершена.
-        COMPLETED = 1;
-        // Заявка создана, но ещё не поставлена в очередь.
-        PENDING = 2;
-        // Происходит обход ссылок на сайте.
-        PROCESSING = 3;
-        // Обход завершён, происходит сохранение карты сайта.
-        GENERATING = 4;
-        //  В процессе генерации произошла ошибка
-        ERROR = 5;
-    }
-
-    message Error {
-        // Код ошибки.
-        Code code = 1;
-
-        enum Code {
-            _ = 0;
-
-            // Невозможно сгенерировать корректную карту, т.к. сайт слишком долго отвечает.
-            TOO_MANY_TIMEOUTS = 1;
-
-            // Невозможно сгенерировать корректную карту, т.к. сайт отдаёт слишком много 500х ошибок.
-            TOO_MANY_INTERNAL_ERRORS = 2;
-        }
-    }
+  }
 }
