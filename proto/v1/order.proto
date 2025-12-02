@@ -14,6 +14,13 @@ service OrderService {
     };
   }
 
+  // Возвращает значения по-умолчанию для дополнительных настроек будущих генераций.
+  rpc getAdditionalOrderSettings(GetAdditionalOrderSettingsRequest) returns (GetAdditionalOrderSettingsResponse) {
+    option (google.api.http) = {
+      get: "/v1/sitemap/order/settings"
+    };
+  }
+
   // Отменяет переданную заявку.
   //
   // Отменяет переданную заявку. Отмененная заявка не учитывается в ограничениях тарифа пользователя.
@@ -80,6 +87,32 @@ message CreateOrderResponse {
       // Исчерпаны лимиты по тарифу пользователя.
       LIMITS_DONE = 4;
 
+    }
+  }
+}
+
+message GetAdditionalOrderSettingsRequest {
+}
+
+message GetAdditionalOrderSettingsResponse {
+  oneof result {
+    // Значения дополнительных настроек.
+    AdditionalSettings settings = 1;
+    // Ошибка получения параметров
+    Error error = 2;
+  }
+
+  message AdditionalSettings {
+    // Указывает, добавлять ли ссылки с query параметрами в карту сайта.
+    bool with_query_params = 1;
+  }
+
+  message Error {
+    // Код ошибки.
+    Code code = 1;
+
+    enum Code {
+      _ = 0;
     }
   }
 }
